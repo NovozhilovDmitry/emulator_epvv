@@ -1,12 +1,9 @@
-import time
 import xml.etree.ElementTree as Et
 import random
 import pathlib
 import shutil
 from zipfile import ZipFile
 
-
-current_value = 11
 
 def name_for_ik():
     """
@@ -172,11 +169,6 @@ def check_dir_emptiness(path_for_ik):
 # -----------------------------------------------------------
 # сгенерировать имена для файлов
 def create_ik(path_for_ik, ed_date, req_date_time):
-    """
-
-    :param iteration_count:
-    :return:
-    """
     # -----------------------------------------------------------
     start_path = pathlib.Path.cwd()
     envelope_path = start_path.joinpath('sample/envelope.xml')
