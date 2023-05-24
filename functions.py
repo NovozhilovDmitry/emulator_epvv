@@ -1,6 +1,7 @@
 import pathlib
 import random
 import xml.etree.ElementTree as Et
+import zipfile
 from zipfile import ZipFile
 import shutil
 import json
@@ -12,6 +13,14 @@ result_codes_and_texts = {
         "0000": "OK",
         "9999": "BAD"
     }
+#
+#
+# def check_in_files(path_to_file):
+#     isarchive = zipfile.is_zipfile(path_to_file)
+#     if isarchive:
+#         return path_to_file
+#     else:
+#         return 'Это не архив?'
 
 
 def write_to_json_file_result_codes(path_to_file, data):
@@ -33,7 +42,7 @@ def get_result_codes_from_json(path_to_file):
         return json.load(json_file)
 
 
-def create_tmp_directory(directory_name):
+def create_directory(directory_name):
     """
     :param directory_name: имя для нового каталога
     :return: создает временный каталог в директории с файлом

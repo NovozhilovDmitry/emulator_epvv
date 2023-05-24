@@ -1,6 +1,8 @@
 import sys
 import traceback
+import pathlib
 from log_settings import logger
+from PyQt6.QtGui import QPixmap, QIcon
 from PyQt6.QtCore import QRunnable, QThreadPool, QSettings, QObject, pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import (QMainWindow,
                              QWidget,
@@ -8,10 +10,19 @@ from PyQt6.QtWidgets import (QMainWindow,
                              QGridLayout,
                              QApplication,
                              QLineEdit,
-                             QPushButton)
-WINDOW_WIDTH = 350
+                             QPushButton,
+                             QFileDialog)
+from functions import (create_directory,
+                       write_to_json_file_result_codes,
+                       get_result_codes_from_json)
+WINDOW_WIDTH = 450
 WINDOW_HEIGHT = 100
-
+TEMP_DIRECTORY_NAME = 'temp'
+FILENAME_JSON = 'result_codes.json'
+data_result_codes = {
+    '0000': 'OK',
+    '9999': 'NOT OK'
+}
 
 class WorkerSignals(QObject):
     finish = pyqtSignal()
@@ -48,16 +59,17 @@ class Window(QMainWindow):
         super(Window, self).__init__()
         self.setWindowTitle('Эмулятор ЕПВВ')  # заголовок главного окна
         self.setMinimumSize(WINDOW_WIDTH, WINDOW_HEIGHT)
+        self.btn_icon = QPixmap("others/folder.png")
         self.layout = QWidget()
         self.main_layout = QGridLayout()
         self.settings = QSettings('config.ini', QSettings.Format.IniFormat)
         self.threadpool = QThreadPool()
         self.header_layout()  # функция с добавленными элементами интерфейса для верхней части
-        # добавление на макеты
         self.layout.setLayout(self.main_layout)
         self.setCentralWidget(self.layout)
         # self.initialization_settings()  # вызов функции с инициализацией сохраненных значений
         # self.set_settings()
+        self.check_json_file()
 
     def print_output(self, s):  # слот для сигнала из потока о завершении выполнения функции
         logger.info(s)
@@ -65,15 +77,61 @@ class Window(QMainWindow):
     def thread_complete(self):  # слот для сигнала о завершении потока
         logger.info(self)
 
-    def thread_check_pdb(self):
+    def thread_handle_files(self):
         logger.info('')
-        worker = Worker(self.fn_test)  # функция, которая выполняется в потоке
+        worker = Worker(self.fn_handle_files)  # функция, которая выполняется в потоке
         worker.signals.result.connect(self.print_output)  # сообщение после завершения выполнения задачи
         worker.signals.finish.connect(self.thread_complete)  # сообщение после завершения потока
         self.threadpool.start(worker)
 
-    def fn_test(self, progress_callback):
+    def check_json_file(self):
+        if pathlib.Path.exists(pathlib.Path.cwd().joinpath(FILENAME_JSON)):
+            self.result_codes_dict = get_result_codes_from_json(pathlib.Path.cwd().joinpath(FILENAME_JSON))
+        else:
+            write_to_json_file_result_codes(pathlib.Path.cwd().joinpath(FILENAME_JSON), data_result_codes)
+
+    def fn_main(self, progress_callback):
+        self.create_temp_directory()
         return f'функция {traceback.extract_stack()[-1][2]} выполнена'
+
+    def create_temp_directory(self):
+        create_directory(TEMP_DIRECTORY_NAME)
+
+    def a(self):
+        pass
+
+    def header_layout(self):
+        """
+        :return: добавлние виджетов в верхнюю часть интерфейса на главном окне
+        """
+        self.label_path_to_file = QLabel('Путь к файлу')
+        self.lineedit_path_to_file = QLineEdit()
+        self.lineedit_path_to_file.setPlaceholderText('Выберите путь к интеграционным конвертам')
+        self.btn_set_path = self.lineedit_path_to_file.addAction(QIcon(self.btn_icon),
+                                                                 QLineEdit.ActionPosition.TrailingPosition)
+        self.btn_set_path.triggered.connect(self.get_path)
+        self.btn_handler = QPushButton('Обработать файлы в каталоге')
+        self.btn_handler.clicked.connect(self.fn_main)
+        self.statusbar = self.statusBar()
+        self.main_layout.addWidget(self.label_path_to_file, 0, 0)
+        self.main_layout.addWidget(self.lineedit_path_to_file, 0, 1)
+        self.main_layout.addWidget(self.btn_handler, 1, 0, 1, 2)
+
+    def get_path(self):
+        get_dir = QFileDialog.getExistingDirectory(self, caption='Выбрать файл')
+        # get_dir = QFileDialog.getOpenFileName()
+        if get_dir:
+            get_dir = get_dir[0]
+        else:
+            get_dir = 'Путь не выбран'
+        self.lineedit_path_to_file.setText(get_dir)
+
+    # def get_settings(self):
+    #     """
+    #     :return: заполнение полей из настроек
+    #     """
+    #     self.editline_credit_jdbc_username.setText(self.settings.value('server_account/jdbc_username'))
+    #     logger.debug('Файл с пользовательскими настройками проинициализирован')
 
     # def closeEvent(self, event):
     #     """
@@ -86,34 +144,6 @@ class Window(QMainWindow):
     #     self.settings.endGroup()
     #     logger.info('Пользовательские настройки сохранены')
     #     logger.info(f'Файл {__file__} закрыт')
-
-    def header_layout(self):
-        """
-        :return: добавлние виджетов в верхнюю часть интерфейса на главном окне
-        """
-        self.label_path_to_file = QLabel('Путь к файлу')
-        self.lineedit_path_to_file = QLineEdit()
-        self.btn_handler = QPushButton('Обработать файлы в каталоге')
-        self.btn_handler.clicked.connect(self.thread_check_pdb)
-
-
-        self.main_layout.addWidget(self.label_path_to_file, 0, 0)
-        self.main_layout.addWidget(self.lineedit_path_to_file, 0, 1)
-        self.main_layout.addWidget(self.btn_handler, 1, 0, 1, 2)
-
-    # def initialization_settings(self):
-    #     """
-    #     :return: заполнение полей из настроек
-    #     """
-    #     self.editline_credit_jdbc_username.setText(self.settings.value('server_account/jdbc_username'))
-        # logger.debug('Файл с пользовательскими настройками проинициализирован')
-
-    # def set_settings(self):
-    #     """
-    #     :return:
-    #     """
-    #     self.editline_pdb_name.setText(get_config('files/jdbc.properties', 'jdbc.url'))
-    #     logger.debug('Файл с пользовательскими настройками проинициализирован')
 
 
 if __name__ == '__main__':
