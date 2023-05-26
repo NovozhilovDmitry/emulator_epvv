@@ -14,10 +14,14 @@ from PyQt6.QtWidgets import (QMainWindow,
                              QFileDialog)
 from functions import (create_directory,
                        write_to_json_file_result_codes,
-                       get_result_codes_from_json)
+                       get_result_codes_from_json,
+                       get_fullpath_to_files_from_arhive,
+                       extract_files_from_arhive_to_directory)
 WINDOW_WIDTH = 450
 WINDOW_HEIGHT = 100
 TEMP_DIRECTORY_NAME = 'temp'
+ARCHIVE_DIRECTORY = 'arh'
+OUT_DIRECTORY = 'out'
 FILENAME_JSON = 'result_codes.json'
 data_result_codes = {
     '0000': 'OK',
@@ -70,6 +74,7 @@ class Window(QMainWindow):
         # self.initialization_settings()  # вызов функции с инициализацией сохраненных значений
         # self.set_settings()
         self.check_json_file()
+        self.create_directories()
 
     def print_output(self, s):  # слот для сигнала из потока о завершении выполнения функции
         logger.info(s)
@@ -79,10 +84,16 @@ class Window(QMainWindow):
 
     def thread_handle_files(self):
         logger.info('')
-        worker = Worker(self.fn_handle_files)  # функция, которая выполняется в потоке
+        worker = Worker(self.fn_main)  # функция, которая выполняется в потоке
         worker.signals.result.connect(self.print_output)  # сообщение после завершения выполнения задачи
         worker.signals.finish.connect(self.thread_complete)  # сообщение после завершения потока
         self.threadpool.start(worker)
+
+    def fn_main(self, progress_callback):
+        temp_files_list = get_fullpath_to_files_from_arhive(self.lineedit_path_to_file.text())
+        for convert in temp_files_list:
+            extract_files_from_arhive_to_directory(convert, TEMP_DIRECTORY_NAME)
+        return f'функция {traceback.extract_stack()[-1][2]} выполнена'
 
     def check_json_file(self):
         if pathlib.Path.exists(pathlib.Path.cwd().joinpath(FILENAME_JSON)):
@@ -90,12 +101,13 @@ class Window(QMainWindow):
         else:
             write_to_json_file_result_codes(pathlib.Path.cwd().joinpath(FILENAME_JSON), data_result_codes)
 
-    def fn_main(self, progress_callback):
-        self.create_temp_directory()
-        return f'функция {traceback.extract_stack()[-1][2]} выполнена'
-
-    def create_temp_directory(self):
-        create_directory(TEMP_DIRECTORY_NAME)
+    def create_directories(self):
+        list_names = [TEMP_DIRECTORY_NAME, ARCHIVE_DIRECTORY, OUT_DIRECTORY]
+        for name in list_names:
+            if pathlib.Path.exists(pathlib.Path.cwd().joinpath(name)):
+                pass
+            else:
+                create_directory(name)
 
     def a(self):
         pass
@@ -106,7 +118,7 @@ class Window(QMainWindow):
         """
         self.label_path_to_file = QLabel('Путь к файлу')
         self.lineedit_path_to_file = QLineEdit()
-        self.lineedit_path_to_file.setPlaceholderText('Выберите путь к интеграционным конвертам')
+        self.lineedit_path_to_file.setPlaceholderText('Укажите путь к интеграционным конвертам')
         self.btn_set_path = self.lineedit_path_to_file.addAction(QIcon(self.btn_icon),
                                                                  QLineEdit.ActionPosition.TrailingPosition)
         self.btn_set_path.triggered.connect(self.get_path)
@@ -119,9 +131,8 @@ class Window(QMainWindow):
 
     def get_path(self):
         get_dir = QFileDialog.getExistingDirectory(self, caption='Выбрать файл')
-        # get_dir = QFileDialog.getOpenFileName()
         if get_dir:
-            get_dir = get_dir[0]
+            get_dir = get_dir
         else:
             get_dir = 'Путь не выбран'
         self.lineedit_path_to_file.setText(get_dir)

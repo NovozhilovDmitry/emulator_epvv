@@ -47,7 +47,7 @@ def create_directory(directory_name):
     :param directory_name: имя для нового каталога
     :return: создает временный каталог в директории с файлом
     """
-    return pathlib.Path.cwd().joinpath(directory_name)
+    return pathlib.Path.cwd().joinpath(directory_name).mkdir(parents=True, exist_ok=True)
 
 
 def delete_tmp_directory(directory_name):
@@ -61,13 +61,14 @@ def delete_tmp_directory(directory_name):
 
 def get_fullpath_to_files_from_arhive(directory_name):
     """
-    :param directory_name: имя каталога, в котором лежат файлы из архива
-    :return: список файлов
+    :param directory_name: путь к каталогу, в котором лежат файлы из архива
+    :return: список файлов с расширением .zip (расширение вшито)
     """
     files_in_directory_list = []
 
     for file in pathlib.Path(directory_name).iterdir():
-        files_in_directory_list.append(str(file))
+        if pathlib.Path(file).suffix == '.zip':
+            files_in_directory_list.append(str(file))
     return files_in_directory_list
 
 
