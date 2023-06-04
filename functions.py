@@ -1,26 +1,11 @@
 import pathlib
 import random
 import xml.etree.ElementTree as Et
-import zipfile
 from zipfile import ZipFile
 import shutil
 import json
 # for element in root.findall('.//{' + namespace_igr + '}element'): ищется в конкретном аттрибуте
 # for element in root.findall('.'): ищется в корневой теге
-
-TEMP_DIRECTORY = 'tmp'
-result_codes_and_texts = {
-        "0000": "OK",
-        "9999": "BAD"
-    }
-#
-#
-# def check_in_files(path_to_file):
-#     isarchive = zipfile.is_zipfile(path_to_file)
-#     if isarchive:
-#         return path_to_file
-#     else:
-#         return 'Это не архив?'
 
 
 def write_to_json_file_result_codes(path_to_file, data):
@@ -94,18 +79,20 @@ def converts_name():
     return f'{first_part[2:10]}-{second_part[2:6]}-{third_part[2:6]}-{fourth_part[2:6]}-{fifth_part[2:14]}'
 
 
-def create_envelope_xml(xsd_path, out_directory_path, out_filename):
+def create_envelope_xml(xsd_path, out_directory_path, out_filename, esod_name, routeinfo_name):
     """
     :param xsd_path: путь к xsd файлу, из которого берется пространство имен из атрибута targetNamespace
     :param out_directory_path: путь к каталогу, где будет создана xml
     :param out_filename: имя xml файла
+    :param esod_name: имя для файла esod receipt
+    :param routeinfo_name: имя для файла route info
     :return: xml файл
     """
     xsd_root = Et.parse(xsd_path).getroot()
     for element in xsd_root.findall('.'):
         main_namespace = element.attrib['targetNamespace']
         Et.register_namespace('igr', main_namespace)
-    dict_file_names = dict(ESODReceipt=converts_name(), RouteInfo=converts_name())
+    dict_file_names = dict(ESODReceipt=esod_name, RouteInfo=routeinfo_name)
     root_element = Et.Element('{' + main_namespace + '}Body')
     child_files = Et.SubElement(root_element, '{' + main_namespace + '}Files')
     subchild_file0 = Et.SubElement(child_files, '{' + main_namespace + '}File')
@@ -129,7 +116,7 @@ def create_esodreceipt_xml(main_xsd_path, sub_xsd_path, out_directory_path, out_
     :param sub_xsd_path: путь к xsd файлу, из которого берется пространство имен для тегов
     :param out_directory_path: путь к каталогу, где будет создана xml
     :param out_filename: имя xml файла
-    :param dict_from_xml: словарь из данных, полученных из xml файла
+    :param dict_from_xml: словарь из данных, полученных из входящего xml файла
     :return: xml файл
     """
     main_xsd_root = Et.parse(main_xsd_path).getroot()
@@ -145,40 +132,38 @@ def create_esodreceipt_xml(main_xsd_path, sub_xsd_path, out_directory_path, out_
     child_body = Et.SubElement(root_element, '{' + main_namespace + '}Body')
     subchild_a_info = Et.SubElement(child_header, '{' + sub_namespace + '}AcknowledgementInfo')
     subchild_message = Et.SubElement(child_header, '{' + sub_namespace + '}MessageInfo')
-    for key, value in dict_from_xml:
-        print(key)
-        print(value)
     a_type = Et.SubElement(subchild_a_info, '{' + sub_namespace + '}AcknowledgementType')
-    # a_type.text = '1'
     result_code = Et.SubElement(subchild_a_info, '{' + sub_namespace + '}ResultCode')
-    # result_code.text = '0000'
     result_text = Et.SubElement(subchild_a_info, '{' + sub_namespace + '}ResultText')
-    # result_text.text = 'Its OK'
     child_to = Et.SubElement(subchild_message, '{' + sub_namespace + '}To')
-    # child_to.text = 'ext'
     child_from = Et.SubElement(subchild_message, '{' + sub_namespace + '}From')
-    # child_from.text = 'int'
     child_id = Et.SubElement(subchild_message, '{' + sub_namespace + '}MessageID')
-    # child_id.text = '5f2693ac-f1d7-4227-a53d-1633dd30710d'
     child_correliation_id = Et.SubElement(subchild_message, '{' + sub_namespace + '}CorrelationMessageID')
-    # child_correliation_id.text = '8987485f-f9e7-4fd2-8f8f-b992c4b5b669'
     child_type = Et.SubElement(subchild_message, '{' + sub_namespace + '}MessageType')
-    # child_type.text = '3'
     child_priority = Et.SubElement(subchild_message, '{' + sub_namespace + '}Priority')
-    # child_priority.text = '4'
     child_creation_time = Et.Element('{' + sub_namespace + '}CreateTime')
-    # child_creation_time.text = '2023-04-12T05:03:01Z'
     child_send_time = Et.SubElement(subchild_message, '{' + sub_namespace + '}SendTime')
-    # child_send_time.text = '2023-04-12T05:03:01Z'
+    a_type.text = dict_from_xml['a_type']
+    result_code.text = dict_from_xml['result_code']
+    result_text.text = dict_from_xml['result_text']
+    child_to.text = dict_from_xml['child_to']
+    child_from.text = dict_from_xml['child_from']
+    child_id.text = dict_from_xml['main_archive_name']
+    child_correliation_id.text = dict_from_xml['archive_name_from_asdco']
+    child_type.text = dict_from_xml['child_type']
+    child_priority.text = dict_from_xml['child_priority']
+    child_creation_time.text = dict_from_xml['creation_send_datetime']
+    child_send_time.text = dict_from_xml['creation_send_datetime']
     out_xml_path = pathlib.Path(out_directory_path).joinpath(out_filename)
     Et.ElementTree(root_element).write(out_xml_path, xml_declaration=True, encoding='utf-8')
 
 
-def create_routeinfo_xml(xsd_path, out_directory_path, out_filename):
+def create_routeinfo_xml(xsd_path, out_directory_path, out_filename, dict_from_xml):
     """
         :param xsd_path: путь к xsd файлу, из которого берется пространство имен из атрибута targetNamespace
         :param out_directory_path: путь к каталогу, где будет создана xml
         :param out_filename: имя xml файла
+        :param dict_from_xml: словарь из данных, полученных из входящего xml файла
         :return: xml файл
         """
     xsd_root = Et.parse(xsd_path).getroot()
@@ -187,34 +172,34 @@ def create_routeinfo_xml(xsd_path, out_directory_path, out_filename):
         Et.register_namespace('igr', main_namespace)
     root_element = Et.Element('{' + main_namespace + '}RouteInfo')
     child_task = Et.SubElement(root_element, '{' + main_namespace + '}Task')
-    # child_task.text = 'ZadOut'
     child_doc_id = Et.SubElement(root_element, '{' + main_namespace + '}DocumentPackID')
-    # child_doc_id.text = '5f2693ac-f1d7-4227-a53d-1633dd30710d'
     child_doc_correlation_id = Et.SubElement(root_element, '{' + main_namespace + '}DocumentPackCorrelationID')
-    # child_doc_correlation_id.text = '8987485f-f9e7-4fd2-8f8f-b992c4b5b669'
     child_datetime = Et.SubElement(root_element, '{' + main_namespace + '}DateTime')
-    # child_datetime.text = '2023-04-12T05:03:01Z'
     child_sender = Et.SubElement(root_element, '{' + main_namespace + '}Sender')
     subchild_feature1 = Et.SubElement(child_sender, '{' + main_namespace + '}Feature')
     subchild_feature2 = Et.SubElement(child_sender, '{' + main_namespace + '}Feature')
     subchild_feature3 = Et.SubElement(child_sender, '{' + main_namespace + '}Feature')
     subchild_feature4 = Et.SubElement(child_sender, '{' + main_namespace + '}Feature')
     subchild_code1 = Et.SubElement(subchild_feature1, '{' + main_namespace + '}Code')
-    # subchild_code1.text = 'INN'
     subchild_value1 = Et.SubElement(subchild_feature1, '{' + main_namespace + '}Value')
-    # subchild_value1.text = '7710030411'
     subchild_code2 = Et.SubElement(subchild_feature2, '{' + main_namespace + '}Code')
-    # subchild_code2.text = 'OGRN'
     subchild_value2 = Et.SubElement(subchild_feature2, '{' + main_namespace + '}Value')
-    # subchild_value2.text = ' '
     subchild_code3 = Et.SubElement(subchild_feature3, '{' + main_namespace + '}Code')
-    # subchild_code3.text = 'BIC'
     subchild_value3 = Et.SubElement(subchild_feature3, '{' + main_namespace + '}Value')
-    # subchild_value3.text = '044525545'
     subchild_code4 = Et.SubElement(subchild_feature4, '{' + main_namespace + '}Code')
-    # subchild_code4.text = 'RegNum'
     subchild_value4 = Et.SubElement(subchild_feature4, '{' + main_namespace + '}Value')
-    # subchild_value4.text = '1'
+    child_task.text = dict_from_xml['child_task']
+    child_doc_id.text = dict_from_xml['main_archive_name']
+    child_doc_correlation_id.text = dict_from_xml['archive_name_from_asdco']
+    child_datetime.text = dict_from_xml['creation_send_datetime']
+    subchild_code1.text = 'INN'
+    subchild_value1.text = dict_from_xml['inn_value']
+    subchild_code2.text = 'OGRN'
+    subchild_value2.text = dict_from_xml['ogrn_value']
+    subchild_code3.text = 'BIC'
+    subchild_value3.text = dict_from_xml['bic_value']
+    subchild_code4.text = 'RegNum'
+    subchild_value4.text = dict_from_xml['regnum_value']
     out_xml_path = pathlib.Path(out_directory_path).joinpath(out_filename)
     with open(out_xml_path, 'wb') as out_file:
         out_file.write(b'<?xml version="1.0" encoding="UTF-8" standalone = "yes"?>\n')
@@ -259,6 +244,5 @@ sub_esodreceipt_xsd_data = 'XMLSchema/cbr_msg_props_v2017.2.0.xsd'
 routeinfo_xsd_data = 'XMLSchema/igr/RouteInfo.xsd'
 arhive_path = '1111/in/8987485f-f9e7-4fd2-8f8f-b992c4b5b669.zip'
 routeinfo_path = 'tmp/b017a438-00e2-4e12-a1d7-eec9127cb62a'  # routeinfo
-# envelope_path = 'tmp/envelope.xml'  # envelope
+envelope_path = 'tmp/envelope.xml'  # envelope
 routeinfo_tags = ['Task', 'DocumentPackID']
-# print(get_dict_from_xml_tags(routeinfo_path, routeinfo_tags))

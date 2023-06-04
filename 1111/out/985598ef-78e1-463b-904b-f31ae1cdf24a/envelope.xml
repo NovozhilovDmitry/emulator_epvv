@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<igr:Body xsi:schemaLocation="http://www.cbr.ru/igr/envelope.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:igr="http://www.cbr.ru/igr/">
+  <igr:Files>
+    <igr:File igr:fileType="ESODReceipt" igr:fileName="ESODReceipt.xml" igr:fileIdentity="d30a4ce2-f3b5-420c-b6e2-cc2d15ce23c3"> </igr:File>
+    <igr:File igr:fileType="RouteInfo" igr:fileName="RouteInfo.xml" igr:fileIdentity="bc97d4fc-7dc8-47cf-8b24-b1dae5f1d144"> </igr:File>
+  </igr:Files>
+</igr:Body>

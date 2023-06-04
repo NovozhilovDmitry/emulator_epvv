@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<igr:RouteInfo xmlns:igr="http://www.cbr.ru/igr/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.cbr.ru/igr/RouteInfo.xsd">
+  <igr:Task>ZadOut</igr:Task>
+  <igr:DocumentPackID>985598ef-78e1-463b-904b-f31ae1cdf24a</igr:DocumentPackID>
+  <igr:DocumentPackCorrelationID>f869681b-13c0-4a48-bd0c-380ce20488cc</igr:DocumentPackCorrelationID>
+  <igr:DateTime>2023-04-12T04:58:37Z</igr:DateTime>
+  <igr:Sender>
+    <igr:Feature><igr:Code>INN</igr:Code><igr:Value>7710030411</igr:Value></igr:Feature>
+    <igr:Feature><igr:Code>OGRN</igr:Code><igr:Value></igr:Value></igr:Feature>
+    <igr:Feature><igr:Code>BIC</igr:Code><igr:Value>044525545</igr:Value></igr:Feature>
+    <igr:Feature><igr:Code>RegNum</igr:Code><igr:Value>1</igr:Value></igr:Feature>
+  </igr:Sender>
+</igr:RouteInfo>
