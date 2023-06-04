@@ -44,15 +44,16 @@ def delete_tmp_directory(directory_name):
     return shutil.rmtree(temp_path, ignore_errors=True)
 
 
-def get_fullpath_to_files_from_arhive(directory_name):
+def get_fullpath_to_files_from_arhive(directory_name, suffix='.zip'):
     """
     :param directory_name: путь к каталогу, в котором лежат файлы из архива
+    :param suffix:
     :return: список файлов с расширением .zip (расширение вшито)
     """
     files_in_directory_list = []
 
     for file in pathlib.Path(directory_name).iterdir():
-        if pathlib.Path(file).suffix == '.zip':
+        if pathlib.Path(file).suffix == suffix:
             files_in_directory_list.append(str(file))
     return files_in_directory_list
 
@@ -149,7 +150,7 @@ def create_esodreceipt_xml(main_xsd_path, sub_xsd_path, out_directory_path, out_
     child_to.text = dict_from_xml['child_to']
     child_from.text = dict_from_xml['child_from']
     child_id.text = dict_from_xml['main_archive_name']
-    child_correliation_id.text = dict_from_xml['archive_name_from_asdco']
+    child_correliation_id.text = dict_from_xml['DocumentPackID']
     child_type.text = dict_from_xml['child_type']
     child_priority.text = dict_from_xml['child_priority']
     child_creation_time.text = dict_from_xml['creation_send_datetime']
@@ -188,18 +189,18 @@ def create_routeinfo_xml(xsd_path, out_directory_path, out_filename, dict_from_x
     subchild_value3 = Et.SubElement(subchild_feature3, '{' + main_namespace + '}Value')
     subchild_code4 = Et.SubElement(subchild_feature4, '{' + main_namespace + '}Code')
     subchild_value4 = Et.SubElement(subchild_feature4, '{' + main_namespace + '}Value')
-    child_task.text = dict_from_xml['child_task']
+    child_task.text = dict_from_xml['Task']
     child_doc_id.text = dict_from_xml['main_archive_name']
-    child_doc_correlation_id.text = dict_from_xml['archive_name_from_asdco']
+    child_doc_correlation_id.text = dict_from_xml['DocumentPackID']
     child_datetime.text = dict_from_xml['creation_send_datetime']
     subchild_code1.text = 'INN'
-    subchild_value1.text = dict_from_xml['inn_value']
+    subchild_value1.text = dict_from_xml['INN']
     subchild_code2.text = 'OGRN'
-    subchild_value2.text = dict_from_xml['ogrn_value']
+    subchild_value2.text = dict_from_xml['OGRN']
     subchild_code3.text = 'BIC'
-    subchild_value3.text = dict_from_xml['bic_value']
+    subchild_value3.text = dict_from_xml['BIC']
     subchild_code4.text = 'RegNum'
-    subchild_value4.text = dict_from_xml['regnum_value']
+    subchild_value4.text = dict_from_xml['RegNum']
     out_xml_path = pathlib.Path(out_directory_path).joinpath(out_filename)
     with open(out_xml_path, 'wb') as out_file:
         out_file.write(b'<?xml version="1.0" encoding="UTF-8" standalone = "yes"?>\n')
@@ -238,6 +239,26 @@ def get_dict_inn_ogrn_bic_regnum_from_routeinfo(xml_path):
     return dict(zip(tag_list, temp_list))
 
 
+def find_routeinfo_file_in_directory(directory_name, tags_list: list):
+    """
+    :param directory_name: путь к директории с файлами
+    :param tags_list: теги, которые нужны в файле RouteInfo
+    :return: словарь с инн, огрн, бик, рег номером КО, задачей и именем архива из АС ДКО
+    """
+    for file in pathlib.Path(directory_name).iterdir():
+        if file.name != '.DS_Store':
+            root = Et.parse(file).getroot()
+            for element in root.findall('.'):
+                if 'RouteInfo' in element.tag:
+                    taxes_tags = get_dict_inn_ogrn_bic_regnum_from_routeinfo(file)
+                    needed_tags = get_dict_from_xml_tags(file, tags_list)
+                    merged_dict = {**taxes_tags, **needed_tags}
+    try:
+        return merged_dict
+    except UnboundLocalError:
+        return None
+
+
 envelope_xsd_data = 'XMLSchema/igr/envelope.xsd'
 main_esodreceipt_xsd_data = 'XMLSchema/soap-envelope.xsd'
 sub_esodreceipt_xsd_data = 'XMLSchema/cbr_msg_props_v2017.2.0.xsd'
@@ -246,3 +267,5 @@ arhive_path = '1111/in/8987485f-f9e7-4fd2-8f8f-b992c4b5b669.zip'
 routeinfo_path = 'tmp/b017a438-00e2-4e12-a1d7-eec9127cb62a'  # routeinfo
 envelope_path = 'tmp/envelope.xml'  # envelope
 routeinfo_tags = ['Task', 'DocumentPackID']
+
+print(find_routeinfo_file_in_directory('tmp', routeinfo_tags))

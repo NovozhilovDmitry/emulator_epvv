@@ -23,8 +23,7 @@ from functions import (create_directory,
                        create_envelope_xml,
                        create_esodreceipt_xml,
                        create_routeinfo_xml,
-                       get_dict_from_xml_tags,
-                       get_dict_inn_ogrn_bic_regnum_from_routeinfo)
+                       find_routeinfo_file_in_directory)
 WINDOW_WIDTH = 460
 WINDOW_HEIGHT = 100
 TEMP_DIRECTORY_NAME = 'temp'
@@ -152,7 +151,12 @@ class Window(QMainWindow):
         return constants
 
     def get_values_from_routeinfo_asdco(self):
-        pass
+        for file in pathlib.Path('tmp').iterdir():
+            if file.name != '.DS_Store':
+                root = Et.parse(file).getroot()
+                for element in root.findall('.'):
+                    if 'RouteInfo' in element.tag:
+                        print('file RouteInfo is Found', file)
 
     def get_values_from_esod(self):
         pass
