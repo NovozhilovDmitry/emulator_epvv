@@ -1,6 +1,7 @@
 import sys
 import traceback
 import pathlib
+import glob
 from log_settings import logger
 from datetime import datetime
 from PyQt6.QtGui import QPixmap, QIcon
@@ -23,10 +24,15 @@ from functions import (create_directory,
                        create_envelope_xml,
                        create_esodreceipt_xml,
                        create_routeinfo_xml,
-                       find_routeinfo_file_in_directory)
+                       find_routeinfo_file_in_directory,
+                       get_arhive,
+                       move_files,
+                       deleting_files,
+                       deleting_directories)
 WINDOW_WIDTH = 460
 WINDOW_HEIGHT = 100
 TEMP_DIRECTORY_NAME = 'temp'
+TEMP_DIRECTORY_FOR_XML = 'tmp'
 ARCHIVE_DIRECTORY = 'arh'
 OUT_DIRECTORY = 'out'
 FILENAME_JSON = 'result_codes.json'
@@ -34,7 +40,6 @@ RESULT_CODE_DICT = {
     '0000': 'OK',
     '9999': 'NOT OK'
 }
-print(datetime.now().isoformat('T', 'seconds'))
 
 
 class WorkerSignals(QObject):
@@ -80,12 +85,10 @@ class Window(QMainWindow):
         self.header_layout()  # функция с добавленными элементами интерфейса для верхней части
         self.layout.setLayout(self.main_layout)
         self.setCentralWidget(self.layout)
-        # self.initialization_settings()  # вызов функции с инициализацией сохраненных значений
-        # self.set_settings()
+        self.get_settings()
         self.check_json_file()
         self.create_directories()
         self.fill_combox()
-        print(self.fill_dictionary_constants())
 
     def print_output(self, s):  # слот для сигнала из потока о завершении выполнения функции
         logger.info(s)
@@ -106,8 +109,36 @@ class Window(QMainWindow):
         :return: выполненная функция
         """
         temp_files_list = get_fullpath_to_files_from_arhive(self.lineedit_path_to_file.text())
+        envelope_xsd = self.xsd_schema1.text()
+        main_esodreceipt_xsd = self.xsd_schema2.text()
+        sub_esodreceipt_xsd = self.xsd_schema3.text()
+        routeinfo_xsd = self.xsd_schema4.text()
+        envelope_name = 'envelope.xml'
+        esod_name = converts_name()
+        routeinfo_name = converts_name()
+        temp_path = pathlib.Path(TEMP_DIRECTORY_FOR_XML)
         for convert in temp_files_list:
             extract_files_from_arhive_to_directory(convert, TEMP_DIRECTORY_NAME)
+            dict_from_xml = self.merge_dict()
+            create_envelope_xml(envelope_xsd, TEMP_DIRECTORY_FOR_XML, envelope_name, esod_name, routeinfo_name)
+            create_esodreceipt_xml(main_esodreceipt_xsd,
+                                   sub_esodreceipt_xsd, TEMP_DIRECTORY_FOR_XML, esod_name, dict_from_xml)
+            create_routeinfo_xml(routeinfo_xsd, TEMP_DIRECTORY_FOR_XML, routeinfo_name, dict_from_xml)
+            param1_archive_name = pathlib.Path(OUT_DIRECTORY).joinpath(dict_from_xml['main_archive_name'])
+            param2_envelope_name = temp_path.joinpath(envelope_name)
+            param3_esod_name = temp_path.joinpath(esod_name)
+            param4_routeinfo_name = temp_path.joinpath(routeinfo_name)
+            get_arhive(param1_archive_name, param2_envelope_name, param3_esod_name, param4_routeinfo_name)
+            deleting_files(param2_envelope_name, param3_esod_name, param4_routeinfo_name)
+            for file in pathlib.Path(TEMP_DIRECTORY_NAME).glob('*'):
+                try:
+                    file.unlink()
+                except OSError as e:
+                    print(f'Error: {file} : {e.strerror}')
+            move_files(convert, ARCHIVE_DIRECTORY)
+        list_directories_for_deleting = [TEMP_DIRECTORY_NAME, TEMP_DIRECTORY_FOR_XML]
+        for directory in list_directories_for_deleting:
+            deleting_directories(directory)
         return f'функция {traceback.extract_stack()[-1][2]} выполнена'
 
     def check_json_file(self):
@@ -123,7 +154,7 @@ class Window(QMainWindow):
         """
         :return: создаются директории: временная, архивная, выходная
         """
-        list_names = [TEMP_DIRECTORY_NAME, ARCHIVE_DIRECTORY, OUT_DIRECTORY]
+        list_names = [TEMP_DIRECTORY_NAME, ARCHIVE_DIRECTORY, OUT_DIRECTORY, TEMP_DIRECTORY_FOR_XML]
         for name in list_names:
             if pathlib.Path.exists(pathlib.Path.cwd().joinpath(name)):
                 pass
@@ -150,19 +181,26 @@ class Window(QMainWindow):
             constants.setdefault('child_priority', new_dict['child_priority'])
         return constants
 
-    def get_values_from_routeinfo_asdco(self):
-        for file in pathlib.Path('tmp').iterdir():
-            if file.name != '.DS_Store':
-                root = Et.parse(file).getroot()
-                for element in root.findall('.'):
-                    if 'RouteInfo' in element.tag:
-                        print('file RouteInfo is Found', file)
-
-    def get_values_from_esod(self):
-        pass
+    def fill_dict_from_interface(self):
+        temp_dict = {
+            'result_code': self.result_code.currentText(),
+            'result_text': self.result_text.text(),
+            'main_archive_name': converts_name(),
+            'creation_send_time': datetime.now().isoformat('T', 'seconds')
+        }
+        return temp_dict
 
     def merge_dict(self):
-        pass
+        routeinfo_tags = ['Task', 'DocumentPackID']
+        constants_dict = self.fill_dictionary_constants()
+        routeinfo_dict = find_routeinfo_file_in_directory(TEMP_DIRECTORY_NAME, routeinfo_tags)
+        interface_dict = self.fill_dict_from_interface()
+        if routeinfo_dict is None:
+            return None
+        else:
+            z = {**constants_dict, **routeinfo_dict}
+            merged_dict = {**interface_dict, **z}
+            return merged_dict
 
     def fill_combox(self):
         """
@@ -239,21 +277,45 @@ class Window(QMainWindow):
             if button is eval('self.btn_xsd' + str(i)):
                 eval('self.xsd_schema' + str(i) + '.setText(get_dir[0])')
 
-    # def get_settings(self):
-    #     """
-    #     :return: заполнение полей из настроек
-    #     """
-    #     self.editline_credit_jdbc_username.setText(self.settings.value('server_account/jdbc_username'))
-    #     logger.debug('Файл с пользовательскими настройками проинициализирован')
+    def get_settings(self):
+        """
+        :return: заполнение полей из настроек
+        """
+        try:
+            width = int(self.settings.value('GUI/width'))
+            height = int(self.settings.value('GUI/height'))
+            x = int(self.settings.value('GUI/x'))
+            y = int(self.settings.value('GUI/y'))
+            self.setGeometry(x, y, width, height)
+            logger.debug('Настройки размеров окна загружены.')
+        except TypeError:
+            pass
+            logger.info('Настройки размеров окна НЕ загружены. Установлены размеры по умолчанию')
+        self.xsd_schema1.setText(self.settings.value('XSD/envelope'))
+        self.xsd_schema2.setText(self.settings.value('XSD/soap-envelope'))
+        self.xsd_schema3.setText(self.settings.value('XSD/cbr_msg_props'))
+        self.xsd_schema4.setText(self.settings.value('XSD/routeinfo'))
+        logger.debug('Файл с пользовательскими настройками проинициализирован')
 
-    # def closeEvent(self, event):
-    #     """
-    #     :param event: событие, которое можно принять или переопределить при закрытии
-    #     :return: охранение настроек при закрытии приложения
-    #     """
-    #     # сохранение размеров и положения окна
-    #     self.settings.setValue('width', self.geometry().width())
-    #     logger.info(f'Пользовательские настройки сохранены. Файл {__file__} закрыт')
+    def closeEvent(self, event):
+        """
+        :param event: событие, которое можно принять или переопределить при закрытии
+        :return: охранение настроек при закрытии приложения
+        """
+        # сохранение размеров и положения окна
+        self.settings.beginGroup('GUI')
+        self.settings.setValue('width', self.geometry().width())
+        self.settings.setValue('height', self.geometry().height())
+        self.settings.setValue('x', self.geometry().x())
+        self.settings.setValue('y', self.geometry().y())
+        self.settings.endGroup()
+        self.settings.beginGroup('XSD')
+        self.settings.setValue('envelope', self.xsd_schema1.text())
+        self.settings.setValue('soap-envelope', self.xsd_schema2.text())
+        self.settings.setValue('cbr_msg_props', self.xsd_schema3.text())
+        self.settings.setValue('routeinfo', self.xsd_schema4.text())
+        self.settings.endGroup()
+        logger.info(f'Пользовательские настройки сохранены. Файл {__file__} закрыт')
 
 
 if __name__ == '__main__':

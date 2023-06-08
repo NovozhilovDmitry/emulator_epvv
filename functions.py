@@ -51,7 +51,6 @@ def get_fullpath_to_files_from_arhive(directory_name, suffix='.zip'):
     :return: список файлов с расширением .zip (расширение вшито)
     """
     files_in_directory_list = []
-
     for file in pathlib.Path(directory_name).iterdir():
         if pathlib.Path(file).suffix == suffix:
             files_in_directory_list.append(str(file))
@@ -259,13 +258,53 @@ def find_routeinfo_file_in_directory(directory_name, tags_list: list):
         return None
 
 
-envelope_xsd_data = 'XMLSchema/igr/envelope.xsd'
-main_esodreceipt_xsd_data = 'XMLSchema/soap-envelope.xsd'
-sub_esodreceipt_xsd_data = 'XMLSchema/cbr_msg_props_v2017.2.0.xsd'
-routeinfo_xsd_data = 'XMLSchema/igr/RouteInfo.xsd'
-arhive_path = '1111/in/8987485f-f9e7-4fd2-8f8f-b992c4b5b669.zip'
-routeinfo_path = 'tmp/b017a438-00e2-4e12-a1d7-eec9127cb62a'  # routeinfo
-envelope_path = 'tmp/envelope.xml'  # envelope
-routeinfo_tags = ['Task', 'DocumentPackID']
+def get_arhive(path, *files):
+    """
+    :param path: путь, где будет создан архив
+    :param files: файлы, которые будут помещаться в архив
+    :return: архив
+    """
+    with ZipFile(path, 'w') as new_zip:  # добавить после path функцию вызова нового имени
+        for arg in files:
+            filename = arg.name
+            new_zip.write(arg, arcname=filename)
+            pathlib.Path(arg).unlink()
 
-print(find_routeinfo_file_in_directory('tmp', routeinfo_tags))
+
+def move_files(copy_from, copy_to):
+    """
+    :param copy_from: полный путь к файлу, который будет перемещен
+    :param copy_to: каталог, в который будет перемещен файл
+    :return: перемещает файл, переданный из copy_from в каталог copy_to
+    """
+    shutil.move(copy_from, copy_to)
+
+
+def deleting_files(*args):
+    """
+    :param args: полный путь к файлу
+    :return: удаление файла
+    """
+    for arg in args:
+        temp_path = pathlib.Path(arg)
+        temp_path.unlink()
+
+
+def deleting_directories(temp_path):
+    """
+    :param temp_path: путь к директории
+    :return: удаление директории
+    """
+    shutil.rmtree(temp_path, ignore_errors=True)
+
+
+# envelope_xsd_data = 'XMLSchema/igr/envelope.xsd'
+# main_esodreceipt_xsd_data = 'XMLSchema/soap-envelope.xsd'
+# sub_esodreceipt_xsd_data = 'XMLSchema/cbr_msg_props_v2017.2.0.xsd'
+# routeinfo_xsd_data = 'XMLSchema/igr/RouteInfo.xsd'
+# arhive_path = '1111/in/8987485f-f9e7-4fd2-8f8f-b992c4b5b669.zip'
+# routeinfo_path = 'tmp/b017a438-00e2-4e12-a1d7-eec9127cb62a'  # routeinfo
+# envelope_path = 'tmp/envelope.xml'  # envelope
+# routeinfo_tags = ['Task', 'DocumentPackID']
+
+# print(find_routeinfo_file_in_directory('tmp', routeinfo_tags))
