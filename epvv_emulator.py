@@ -1,7 +1,6 @@
 import sys
 import traceback
 import pathlib
-import glob
 from log_settings import logger
 from datetime import datetime
 from PyQt6.QtGui import QPixmap, QIcon
