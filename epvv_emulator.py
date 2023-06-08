@@ -26,7 +26,6 @@ from functions import (create_directory,
                        find_routeinfo_file_in_directory,
                        get_arhive,
                        move_files,
-                       deleting_files,
                        deleting_directories)
 WINDOW_WIDTH = 460
 WINDOW_HEIGHT = 100
