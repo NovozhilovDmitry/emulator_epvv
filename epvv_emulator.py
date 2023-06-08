@@ -129,7 +129,7 @@ class Window(QMainWindow):
             param3_esod_name = temp_path.joinpath(esod_name)
             param4_routeinfo_name = temp_path.joinpath(routeinfo_name)
             get_arhive(param1_archive_name, param2_envelope_name, param3_esod_name, param4_routeinfo_name)
-            deleting_files(param2_envelope_name, param3_esod_name, param4_routeinfo_name)
+            # deleting_files(param2_envelope_name, param3_esod_name, param4_routeinfo_name)
             for file in pathlib.Path(TEMP_DIRECTORY_NAME).glob('*'):
                 try:
                     file.unlink()
@@ -139,6 +139,7 @@ class Window(QMainWindow):
         list_directories_for_deleting = [TEMP_DIRECTORY_NAME, TEMP_DIRECTORY_FOR_XML]
         for directory in list_directories_for_deleting:
             deleting_directories(directory)
+        print(f'функция {traceback.extract_stack()[-1][2]} выполнена')
         return f'функция {traceback.extract_stack()[-1][2]} выполнена'
 
     def check_json_file(self):
@@ -186,7 +187,7 @@ class Window(QMainWindow):
             'result_code': self.result_code.currentText(),
             'result_text': self.result_text.text(),
             'main_archive_name': converts_name(),
-            'creation_send_time': datetime.now().isoformat('T', 'seconds')
+            'creation_send_datetime': datetime.now().isoformat('T', 'seconds')
         }
         return temp_dict
 
