@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<xs:schema xmlns:igr="http://www.cbr.ru/igr/" attributeFormDefault="qualified" elementFormDefault="qualified" targetNamespace="http://www.cbr.ru/igr/" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:include schemaLocation="common.xsd" />
+    <xs:element name="RouteInfo" type="igr:RouteInfoType" />
+    <xs:complexType name="RouteInfoType">
+        <xs:annotation>
+            <xs:documentation>Тип файла протокола</xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="Task" type="xs:NMTOKEN">
+                <xs:annotation>
+                    <xs:documentation>Идентификатор задачи из справочника задач</xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="DocumentPackID" type="igr:GUID">
+                <xs:annotation>
+                    <xs:documentation>Уникальный идентификатор передаваемого сообщения.</xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="DocumentPackGroupId" type="igr:GUID" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>Уникальный идентификатор пакета документов.</xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="DocumentPackCorrelationID" type="igr:GUID" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>Уникальный идентификатор сообщения, на которое отправляется ответ.</xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="Subject" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>Тема сообщения.</xs:documentation>
+                </xs:annotation>
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:maxLength value="400"/>
+                        <xs:minLength value="0"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element name="DateTime" type="igr:DateType">
+                <xs:annotation>
+                    <xs:documentation>Дата-время отправки</xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="Sender" type="igr:ESODAbonentType" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>Отправитель сообщения. Комплексный тип.</xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="Receiver" type="igr:ESODAbonentType" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>Получатель сообщения. Комплексный тип.</xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="DocumentPackRouterMetaData" type="xs:string" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>Метаинформация маршрутизатора</xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>

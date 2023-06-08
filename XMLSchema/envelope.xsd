@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<xs:schema xmlns:igr="http://www.cbr.ru/igr/" attributeFormDefault="qualified" elementFormDefault="qualified" targetNamespace="http://www.cbr.ru/igr/" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:include schemaLocation="common.xsd" />
+    <xs:element name="Body" type="igr:BodyType" />
+    <xs:complexType name="FilePropertyType">
+        <xs:annotation>
+            <xs:documentation>Описание свойства передаваемого файла.</xs:documentation>
+        </xs:annotation>
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="name" type="xs:NMTOKEN" use="required">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <!-- Известные значения -->
+                            <xs:enumeration value="ContainerType" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                                <xs:annotation>
+                                    <xs:documentation>Свойство указывает тип контейнера. На текущий момент поддерживается только тип Archive. Тип архивации указывается в свойстве файла CompressFormat.</xs:documentation>
+                                </xs:annotation>
+                            </xs:enumeration>
+                            <xs:enumeration value="CompressFormat" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                                <xs:annotation>
+                                    <xs:documentation>Свойство определяет тип сжатия файла. Может принимать значения Zip.</xs:documentation>
+                                </xs:annotation>
+                            </xs:enumeration>
+                            <xs:enumeration value="EncryptFormat" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                                <xs:annotation>
+                                    <xs:documentation>Свойство указывающее формат шифрования. Может принимать значение PKCS7.</xs:documentation>
+                                </xs:annotation>
+                            </xs:enumeration>
+                            <xs:enumeration value="SignFormat" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                                <xs:annotation>
+                                    <xs:documentation>Свойство указывающее формат подписи. Может принимать значение PKCS7.</xs:documentation>
+                                </xs:annotation>
+                            </xs:enumeration>
+                            <xs:enumeration value="LastModified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                                <xs:annotation>
+                                    <xs:documentation>Свойство указывает время модификации файла. Тип igr:DateType.</xs:documentation>
+                                </xs:annotation>
+                            </xs:enumeration>
+                            <xs:enumeration value="Hash" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                                <xs:annotation>
+                                    <xs:documentation>Свойство содержит хеш файла</xs:documentation>
+                                </xs:annotation>
+                            </xs:enumeration>
+                            <xs:enumeration value="Template" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                                <xs:annotation>
+                                    <xs:documentation>Свойство указывает наименование файла шаблона используемого для проверки файла.</xs:documentation>
+                                </xs:annotation>
+                            </xs:enumeration>
+                            <xs:enumeration value="FileEncoding" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                                <xs:annotation>
+                                    <xs:documentation>Кодировка файла.(формат кодировки?).</xs:documentation>
+                                </xs:annotation>
+                            </xs:enumeration>
+                            <xs:enumeration value="AssociatedFileIdentity" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                                <xs:annotation>
+                                    <xs:documentation>Свойство указывает, что вложение имеет отношение к другому файлу, атрибут FileIdentity которого указан в его значении. Например, необходимо для указания к какому файлу относится подпись.</xs:documentation>
+                                </xs:annotation>
+                            </xs:enumeration>
+                            <xs:enumeration value="Confidential" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                                <xs:annotation>
+                                    <xs:documentation>Свойство указывает, что вложение является конфиденциальным и должно передаваться только в зашифрованном виде. Допустимое значение "true". Отсутствие свойства означает что документ не содержит ни ИОД ни ПДн.</xs:documentation>
+                                </xs:annotation>
+                            </xs:enumeration>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+    <xs:simpleType name="FileTypes">
+        <xs:annotation>
+            <xs:documentation>
+                <!-- Известные типы файлов -->
+                <xs:enumeration value="Document" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:annotation>
+                        <xs:documentation>Документ неопределенного типа.</xs:documentation>
+                    </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="Sign" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:annotation>
+                        <xs:documentation>Отсоединенная подпись.</xs:documentation>
+                    </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="Container" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:annotation>
+                        <xs:documentation>Файл является контейнером. Тип контейнера должен быть указан в свойстве файла ContainerType.</xs:documentation>
+                    </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="ToFESInfo" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:annotation>
+                        <xs:documentation>Файл протокола обмена. Направление: ЕСОД - АС ФЭС</xs:documentation>
+                    </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="ToSADDInfo" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:annotation>
+                        <xs:documentation>Файл протокола обмена. Направление: ЕСОД - САДД (для передачи СОС и сертификатов)</xs:documentation>
+                    </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="ToSSDInfo" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:annotation>
+                        <xs:documentation>Файл протокола обмена. Направление: ЕСОД - СО ССД</xs:documentation>
+                    </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="FromSSDInfo" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:annotation>
+                        <xs:documentation>Файл протокола обмена. Направление: СО ССД - ЕСОД</xs:documentation>
+                    </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="ToUFRInfo" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:annotation>
+                        <xs:documentation>Файл протокола обмена. Направление: ЕСОД - CО УФР</xs:documentation>
+                    </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="FromUFRInfo" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:annotation>
+                        <xs:documentation>Файл протокола обмена. Направление: СО УФР - ЕСОД</xs:documentation>
+                    </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="ToNEVAInfo" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:annotation>
+                        <xs:documentation>Файл протокола обмена. Направление: ЕСОД - ТПС НЕВА</xs:documentation>
+                    </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="FromNEVAInfo" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:annotation>
+                        <xs:documentation>Файл протокола обмена. Направление: ТПС НЕВА - ЕСОД</xs:documentation>
+                    </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="ToPortalInfo" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:annotation>
+                        <xs:documentation>Файл протокола обмена. Направление: роутер ЕСОД - портал ЕСОД</xs:documentation>
+                    </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="FromPortalInfo" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:annotation>
+                        <xs:documentation>Файл протокола обмена. Направление: портал ЕСОД - роутер ЕСОД</xs:documentation>
+                    </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="StatusInfo" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:annotation>
+                        <xs:documentation>Файл является информацией о состоянии обработки сообщения.</xs:documentation>
+                    </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="EventInfo" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:annotation>
+                        <xs:documentation>Файл информации о событии</xs:documentation>
+                    </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="ESODReceipt" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:annotation>
+                        <xs:documentation>Файл является отказом в регистрации от САДД.</xs:documentation>
+                    </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="UFRReceipt" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:annotation>
+                        <xs:documentation>Файл уведомления СО УФР</xs:documentation>
+                    </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="SSDReceipt" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:annotation>
+                        <xs:documentation>Файл уведомления СО ССД</xs:documentation>
+                    </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="OKAReceipt" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:annotation>
+                        <xs:documentation>Файл уведомления ТПС ОКА</xs:documentation>
+                    </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="SADDRefusal" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:annotation>
+                        <xs:documentation>Файл является отказом в регистрации от САДД.</xs:documentation>
+                    </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="SADDReceipt" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:annotation>
+                        <xs:documentation>Файл является подтверждением о регистрации в САДД.</xs:documentation>
+                    </xs:annotation>
+                </xs:enumeration>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:NMTOKEN" />
+    </xs:simpleType>
+    <xs:complexType name="FileType">
+        <xs:annotation>
+            <xs:documentation>Включенный в сообщение бинарный документ. Комплексный тип.</xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="FileProperties" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>Свойства файла.</xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="FileProperty" type="igr:FilePropertyType" maxOccurs="unbounded">
+                            <xs:annotation>
+                                <xs:documentation>Описание свойства передаваемого файла.</xs:documentation>
+                            </xs:annotation>
+                        </xs:element>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="fileName" type="xs:token">
+            <xs:annotation>
+                <xs:documentation>Имя файла в терминах отправителя.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="fileIdentity" type="igr:GUID" use="required">
+            <xs:annotation>
+                <xs:documentation>Имя файла в контейнере. Должен быть уникальным среди множества всех файлов в транспортном конверте (во всех контейнерах).</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="fileType" type="igr:FileTypes" use="required">
+            <xs:annotation>
+                <xs:documentation>Тип файла.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+    <xs:complexType name="BodyType">
+        <xs:annotation>
+            <xs:documentation>Тело интеграционного конверта.</xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="Files" minOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>Описание файлов содержащихся в данном файле.</xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="File" type="igr:FileType" maxOccurs="unbounded">
+                            <xs:annotation>
+                                <xs:documentation>Описание передаваемого файла.</xs:documentation>
+                            </xs:annotation>
+                        </xs:element>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>
