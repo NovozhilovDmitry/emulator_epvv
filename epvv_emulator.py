@@ -148,6 +148,7 @@ class Window(QMainWindow):
             self.result_codes_dict = get_result_codes_from_json(pathlib.Path.cwd().joinpath(FILENAME_JSON))
         else:
             write_to_json_file_result_codes(pathlib.Path.cwd().joinpath(FILENAME_JSON), RESULT_CODE_DICT)
+            self.result_codes_dict = get_result_codes_from_json(pathlib.Path.cwd().joinpath(FILENAME_JSON))
 
     def create_directories(self):
         """
