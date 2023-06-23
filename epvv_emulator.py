@@ -35,7 +35,7 @@ ARCHIVE_DIRECTORY = 'arh'
 OUT_DIRECTORY = 'out'
 FILENAME_JSON = 'result_codes.json'
 RESULT_CODE_DICT = {
-    '0000': 'OK',
+    '0000': 'Сообщение успешно сформировано',
     '9999': 'NOT OK'
 }
 
@@ -93,9 +93,11 @@ class Window(QMainWindow):
 
     def thread_complete(self):  # слот для сигнала о завершении потока
         logger.info(self)
+        self.status.showMessage('Создание конвертов ED408 завершено')
 
     def thread_handle_files(self):
-        logger.info('')
+        logger.info('Начато выполнение функции по формированию ответных интеграционных конвертов')
+        self.status.showMessage('Идет процесс создания конвертов ED408')
         worker = Worker(self.fn_main)  # функция, которая выполняется в потоке
         worker.signals.result.connect(self.print_output)  # сообщение после завершения выполнения задачи
         worker.signals.finish.connect(self.thread_complete)  # сообщение после завершения потока
@@ -127,17 +129,20 @@ class Window(QMainWindow):
             param3_esod_name = temp_path.joinpath(esod_name)
             param4_routeinfo_name = temp_path.joinpath(routeinfo_name)
             get_arhive(param1_archive_name, param2_envelope_name, param3_esod_name, param4_routeinfo_name)
-            # deleting_files(param2_envelope_name, param3_esod_name, param4_routeinfo_name)
             for file in pathlib.Path(TEMP_DIRECTORY_NAME).glob('*'):
                 try:
                     file.unlink()
                 except OSError as e:
                     print(f'Error: {file} : {e.strerror}')
-            move_files(convert, ARCHIVE_DIRECTORY)
+            full_path = pathlib.Path(ARCHIVE_DIRECTORY, convert)
+            if pathlib.Path.exists(full_path):
+                move_files(convert, full_path)
+            else:
+                move_files(convert, ARCHIVE_DIRECTORY)
         list_directories_for_deleting = [TEMP_DIRECTORY_NAME, TEMP_DIRECTORY_FOR_XML]
         for directory in list_directories_for_deleting:
             deleting_directories(directory)
-        print(f'функция {traceback.extract_stack()[-1][2]} выполнена')
+        logger.info('Функция по формированию ответных интеграционных конвертов завершилась успешно')
         return f'функция {traceback.extract_stack()[-1][2]} выполнена'
 
     def check_json_file(self):
@@ -185,8 +190,8 @@ class Window(QMainWindow):
         temp_dict = {
             'result_code': self.result_code.currentText(),
             'result_text': self.result_text.text(),
-            'main_archive_name': converts_name(),
-            'creation_send_datetime': datetime.now().isoformat('T', 'seconds')
+            'main_archive_name': converts_name() + '.zip',
+            'creation_send_datetime': datetime.now().isoformat('T', 'seconds') + 'Z'
         }
         return temp_dict
 
@@ -225,12 +230,16 @@ class Window(QMainWindow):
         self.lineedit_path_to_file.setPlaceholderText('Укажите каталог с интеграционными конвертами')
         self.xsd_schema1 = QLineEdit()
         self.xsd_schema1.setPlaceholderText('Путь к envelope.xsd')
+        self.xsd_schema1.setToolTip('Путь к файлу: AppContext-> XMLSchemas-> epvv-> igr')
         self.xsd_schema2 = QLineEdit()
         self.xsd_schema2.setPlaceholderText('Путь к soap-envelope.xsd')
+        self.xsd_schema1.setToolTip('Путь к файлу: AppContext-> XMLSchemas-> epvv')
         self.xsd_schema3 = QLineEdit()
         self.xsd_schema3.setPlaceholderText('Путь к cbr_msg_props.xsd')
+        self.xsd_schema1.setToolTip('Путь к файлу: AppContext-> XMLSchemas-> epvv')
         self.xsd_schema4 = QLineEdit()
         self.xsd_schema4.setPlaceholderText('Путь к routeinfo.xsd')
+        self.xsd_schema1.setToolTip('Путь к файлу: AppContext-> XMLSchemas-> epvv-> igr')
         self.result_code = QComboBox()
         self.result_code.activated.connect(self.get_result_text)
         self.result_text = QLineEdit()
@@ -248,6 +257,7 @@ class Window(QMainWindow):
         self.btn_xsd4.triggered.connect(self.get_xsd_path)
         self.btn_handler = QPushButton('Обработать файлы в каталоге')
         self.btn_handler.clicked.connect(self.fn_main)
+        self.status = self.statusBar()
         self.main_layout.addWidget(self.label_path_to_file, 0, 0)
         self.main_layout.addWidget(self.lineedit_path_to_file, 0, 1)
         self.main_layout.addWidget(self.xsd_schema1, 1, 0, 1, 2)

@@ -98,11 +98,7 @@ def create_envelope_xml(xsd_path, out_directory_path, out_filename, esod_name, r
     subchild_file0 = Et.SubElement(child_files, '{' + main_namespace + '}File')
     subchild_file1 = Et.SubElement(child_files, '{' + main_namespace + '}File')
     for count, (name, filename) in enumerate(dict_file_names.items()):
-        file_attribs = dict(
-            fileType=name,
-            fileName=f'{name}.xml',
-            fileIdentity=filename
-        )
+        file_attribs = {'igr:fileType': name, 'igr:fileName': f'{name}.xml', 'fileIdentity': filename}
         for key, value in file_attribs.items():
             exec(f'subchild_file{count}.attrib[key] = value')
         exec(f'subchild_file{count}.text = " "')
@@ -141,7 +137,7 @@ def create_esodreceipt_xml(main_xsd_path, sub_xsd_path, out_directory_path, out_
     child_correliation_id = Et.SubElement(subchild_message, '{' + sub_namespace + '}CorrelationMessageID')
     child_type = Et.SubElement(subchild_message, '{' + sub_namespace + '}MessageType')
     child_priority = Et.SubElement(subchild_message, '{' + sub_namespace + '}Priority')
-    child_creation_time = Et.Element('{' + sub_namespace + '}CreateTime')
+    child_creation_time = Et.SubElement(subchild_message, '{' + sub_namespace + '}CreateTime')
     child_send_time = Et.SubElement(subchild_message, '{' + sub_namespace + '}SendTime')
     a_type.text = dict_from_xml['a_type']
     result_code.text = dict_from_xml['result_code']
