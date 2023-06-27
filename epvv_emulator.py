@@ -13,7 +13,8 @@ from PyQt6.QtWidgets import (QMainWindow,
                              QLineEdit,
                              QPushButton,
                              QFileDialog,
-                             QComboBox)
+                             QComboBox,
+                             QMessageBox)
 from functions import (create_directory,
                        write_to_json_file_result_codes,
                        get_result_codes_from_json,
@@ -117,32 +118,33 @@ class Window(QMainWindow):
         esod_name = converts_name()
         routeinfo_name = converts_name()
         temp_path = pathlib.Path(TEMP_DIRECTORY_FOR_XML)
-        for convert in temp_files_list:
-            extract_files_from_arhive_to_directory(convert, TEMP_DIRECTORY_NAME)
-            dict_from_xml = self.merge_dict()
-            create_envelope_xml(envelope_xsd, TEMP_DIRECTORY_FOR_XML, envelope_name, esod_name, routeinfo_name)
-            create_esodreceipt_xml(main_esodreceipt_xsd,
-                                   sub_esodreceipt_xsd, TEMP_DIRECTORY_FOR_XML, esod_name, dict_from_xml)
-            create_routeinfo_xml(routeinfo_xsd, TEMP_DIRECTORY_FOR_XML, routeinfo_name, dict_from_xml)
-            param1_archive_name = pathlib.Path(OUT_DIRECTORY).joinpath(dict_from_xml['main_archive_name'])
-            param2_envelope_name = temp_path.joinpath(envelope_name)
-            param3_esod_name = temp_path.joinpath(esod_name)
-            param4_routeinfo_name = temp_path.joinpath(routeinfo_name)
-            get_arhive(param1_archive_name, param2_envelope_name, param3_esod_name, param4_routeinfo_name)
-            for file in pathlib.Path(TEMP_DIRECTORY_NAME).glob('*'):
-                try:
-                    file.unlink()
-                except OSError as e:
-                    print(f'Error: {file} : {e.strerror}')
-            full_path = pathlib.Path(ARCHIVE_DIRECTORY, convert)
-            if pathlib.Path.exists(full_path):
-                move_files(convert, full_path)
-            else:
-                move_files(convert, ARCHIVE_DIRECTORY)
-        list_directories_for_deleting = [TEMP_DIRECTORY_NAME, TEMP_DIRECTORY_FOR_XML]
-        for directory in list_directories_for_deleting:
-            deleting_directories(directory)
-        logger.info('Функция по формированию ответных интеграционных конвертов завершилась успешно')
+        if self.paths_validation:
+            for convert in temp_files_list:
+                extract_files_from_arhive_to_directory(convert, TEMP_DIRECTORY_NAME)
+                dict_from_xml = self.merge_dict()
+                create_envelope_xml(envelope_xsd, TEMP_DIRECTORY_FOR_XML, envelope_name, esod_name, routeinfo_name)
+                create_esodreceipt_xml(main_esodreceipt_xsd,
+                                       sub_esodreceipt_xsd, TEMP_DIRECTORY_FOR_XML, esod_name, dict_from_xml)
+                create_routeinfo_xml(routeinfo_xsd, TEMP_DIRECTORY_FOR_XML, routeinfo_name, dict_from_xml)
+                param1_archive_name = pathlib.Path(OUT_DIRECTORY).joinpath(dict_from_xml['main_archive_name'])
+                param2_envelope_name = temp_path.joinpath(envelope_name)
+                param3_esod_name = temp_path.joinpath(esod_name)
+                param4_routeinfo_name = temp_path.joinpath(routeinfo_name)
+                get_arhive(param1_archive_name, param2_envelope_name, param3_esod_name, param4_routeinfo_name)
+                for file in pathlib.Path(TEMP_DIRECTORY_NAME).glob('*'):
+                    try:
+                        file.unlink()
+                    except OSError as e:
+                        print(f'Error: {file} : {e.strerror}')
+                full_path = pathlib.Path(ARCHIVE_DIRECTORY, convert)
+                if pathlib.Path.exists(full_path):
+                    move_files(convert, full_path)
+                else:
+                    move_files(convert, ARCHIVE_DIRECTORY)
+            list_directories_for_deleting = [TEMP_DIRECTORY_NAME, TEMP_DIRECTORY_FOR_XML]
+            for directory in list_directories_for_deleting:
+                deleting_directories(directory)
+            logger.info('Функция по формированию ответных интеграционных конвертов завершилась успешно')
         return f'функция {traceback.extract_stack()[-1][2]} выполнена'
 
     def check_json_file(self):
@@ -221,9 +223,31 @@ class Window(QMainWindow):
         """
         self.result_text.setText(self.result_codes_dict[self.result_code.currentText()])
 
+    def paths_validation(self):
+        full_str_error = []
+        for i in range(1, 5):
+            if pathlib.Path(eval('self.xsd_schema' + str(i) + '.text()')).exists():
+                pass
+            else:
+                full_str_error.append(eval('self.xsd_schema' + str(i) + '.text()'))
+        if len(full_str_error) == 0:
+            logger.info('Успешная валидация путей')
+            return True
+        if len(full_str_error) > 0:
+            error_message = 'Проверьте корректность следующих введенных путей:\n'
+            for i in full_str_error:
+                error_message = error_message + i + '\n'
+            dlg = QMessageBox()
+            dlg.setWindowTitle('Ошибка валидации путей')
+            dlg.setText(error_message)
+            dlg.setStandardButtons(QMessageBox.StandardButton.Close)
+            button = dlg.exec()
+            logger.error('Ошибка валидации путей')
+            return False
+
     def header_layout(self):
         """
-        :return: добавлние виджетов в верхнюю часть интерфейса на главном окне
+        :return: добавление виджетов в верхнюю часть интерфейса на главном окне
         """
         self.label_path_to_file = QLabel('Путь к файлу')
         self.lineedit_path_to_file = QLineEdit()
@@ -256,7 +280,8 @@ class Window(QMainWindow):
         self.btn_xsd3.triggered.connect(self.get_xsd_path)
         self.btn_xsd4.triggered.connect(self.get_xsd_path)
         self.btn_handler = QPushButton('Обработать файлы в каталоге')
-        self.btn_handler.clicked.connect(self.fn_main)
+        # self.btn_handler.clicked.connect(self.fn_main)
+        self.btn_handler.clicked.connect(self.paths_validation)
         self.status = self.statusBar()
         self.main_layout.addWidget(self.label_path_to_file, 0, 0)
         self.main_layout.addWidget(self.lineedit_path_to_file, 0, 1)
@@ -297,15 +322,14 @@ class Window(QMainWindow):
             x = int(self.settings.value('GUI/x'))
             y = int(self.settings.value('GUI/y'))
             self.setGeometry(x, y, width, height)
-            logger.debug('Настройки размеров окна загружены.')
+            logger.info('Настройки размеров окна загружены.')
         except TypeError:
-            pass
             logger.info('Настройки размеров окна НЕ загружены. Установлены размеры по умолчанию')
         self.xsd_schema1.setText(self.settings.value('XSD/envelope'))
         self.xsd_schema2.setText(self.settings.value('XSD/soap-envelope'))
         self.xsd_schema3.setText(self.settings.value('XSD/cbr_msg_props'))
         self.xsd_schema4.setText(self.settings.value('XSD/routeinfo'))
-        logger.debug('Файл с пользовательскими настройками проинициализирован')
+        logger.info('Файл с пользовательскими настройками проинициализирован')
 
     def closeEvent(self, event):
         """

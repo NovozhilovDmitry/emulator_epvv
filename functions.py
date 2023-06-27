@@ -4,8 +4,6 @@ import xml.etree.ElementTree as Et
 from zipfile import ZipFile
 import shutil
 import json
-# for element in root.findall('.//{' + namespace_igr + '}element'): ищется в конкретном аттрибуте
-# for element in root.findall('.'): ищется в корневой теге
 
 
 def write_to_json_file_result_codes(path_to_file, data):
@@ -98,7 +96,7 @@ def create_envelope_xml(xsd_path, out_directory_path, out_filename, esod_name, r
     subchild_file0 = Et.SubElement(child_files, '{' + main_namespace + '}File')
     subchild_file1 = Et.SubElement(child_files, '{' + main_namespace + '}File')
     for count, (name, filename) in enumerate(dict_file_names.items()):
-        file_attribs = {'igr:fileType': name, 'igr:fileName': f'{name}.xml', 'fileIdentity': filename}
+        file_attribs = {'igr:fileType': name, 'igr:fileName': f'{name}.xml', 'igr:fileIdentity': filename}
         for key, value in file_attribs.items():
             exec(f'subchild_file{count}.attrib[key] = value')
         exec(f'subchild_file{count}.text = " "')
