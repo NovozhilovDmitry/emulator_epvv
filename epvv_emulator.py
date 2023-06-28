@@ -126,7 +126,7 @@ class Window(QMainWindow):
                 create_esodreceipt_xml(main_esodreceipt_xsd,
                                        sub_esodreceipt_xsd, TEMP_DIRECTORY_FOR_XML, esod_name, dict_from_xml)
                 create_routeinfo_xml(routeinfo_xsd, TEMP_DIRECTORY_FOR_XML, routeinfo_name, dict_from_xml)
-                param1_archive_name = pathlib.Path(OUT_DIRECTORY).joinpath(dict_from_xml['main_archive_name'])
+                param1_archive_name = pathlib.Path(OUT_DIRECTORY).joinpath(dict_from_xml['main_archive_name']+'.zip')
                 param2_envelope_name = temp_path.joinpath(envelope_name)
                 param3_esod_name = temp_path.joinpath(esod_name)
                 param4_routeinfo_name = temp_path.joinpath(routeinfo_name)
@@ -192,7 +192,7 @@ class Window(QMainWindow):
         temp_dict = {
             'result_code': self.result_code.currentText(),
             'result_text': self.result_text.text(),
-            'main_archive_name': converts_name() + '.zip',
+            'main_archive_name': converts_name(),
             'creation_send_datetime': datetime.now().isoformat('T', 'seconds') + 'Z'
         }
         return temp_dict

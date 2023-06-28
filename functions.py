@@ -220,16 +220,21 @@ def get_dict_inn_ogrn_bic_regnum_from_routeinfo(xml_path):
     :param xml_path: путь к xml файлу
     :return: словарь с ИНН, ОГРН, БИК и номером КО из xml файла
     """
-    tag_list = ['INN', 'OGRN', 'BIC', 'RegNum']
+    tag_list = []
     temp_list = []
     root = Et.parse(xml_path).getroot()
     for element in root.findall('.//*'):
+        if 'Code' in element.tag:
+            tag_list.append(element.text)
         if 'Value' in element.tag:
-            if element.text is None:
-                temp_list.append('')
-            else:
-                temp_list.append(element.text)
-    return dict(zip(tag_list, temp_list))
+            temp_list.append(element.text)
+    if 'OGRN' in tag_list:
+        tag_list = tag_list
+    else:
+        tag_list.append('OGRN')
+        temp_list.append('')
+    merge_dict = dict(zip(tag_list, temp_list))
+    return merge_dict
 
 
 def find_routeinfo_file_in_directory(directory_name, tags_list: list):
@@ -290,15 +295,3 @@ def deleting_directories(temp_path):
     :return: удаление директории
     """
     shutil.rmtree(temp_path, ignore_errors=True)
-
-
-# envelope_xsd_data = 'XMLSchema/igr/envelope.xsd'
-# main_esodreceipt_xsd_data = 'XMLSchema/soap-envelope.xsd'
-# sub_esodreceipt_xsd_data = 'XMLSchema/cbr_msg_props_v2017.2.0.xsd'
-# routeinfo_xsd_data = 'XMLSchema/igr/RouteInfo.xsd'
-# arhive_path = '1111/in/8987485f-f9e7-4fd2-8f8f-b992c4b5b669.zip'
-# routeinfo_path = 'tmp/b017a438-00e2-4e12-a1d7-eec9127cb62a'  # routeinfo
-# envelope_path = 'tmp/envelope.xml'  # envelope
-# routeinfo_tags = ['Task', 'DocumentPackID']
-
-# print(find_routeinfo_file_in_directory('tmp', routeinfo_tags))
