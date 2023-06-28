@@ -263,7 +263,7 @@ def get_arhive(path, *files):
     :param files: файлы, которые будут помещаться в архив
     :return: архив
     """
-    with ZipFile(path, 'w') as new_zip:  # добавить после path функцию вызова нового имени
+    with ZipFile(path, 'w') as new_zip:
         for arg in files:
             filename = arg.name
             new_zip.write(arg, arcname=filename)
