@@ -86,7 +86,6 @@ class Window(QMainWindow):
         self.setCentralWidget(self.layout)
         self.get_settings()
         self.check_json_file()
-        self.create_directories()
         self.fill_combox()
 
     def print_output(self, s):  # слот для сигнала из потока о завершении выполнения функции
@@ -94,14 +93,12 @@ class Window(QMainWindow):
 
     def thread_complete(self):  # слот для сигнала о завершении потока
         logger.info(self)
-        self.status.showMessage('Создание конвертов ED408 завершено')
 
     def thread_handle_files(self):
         logger.info('Начато выполнение функции по формированию ответных интеграционных конвертов')
-        self.status.showMessage('Идет процесс создания конвертов ED408')
         worker = Worker(self.fn_main)  # функция, которая выполняется в потоке
         worker.signals.result.connect(self.print_output)  # сообщение после завершения выполнения задачи
-        worker.signals.finish.connect(self.thread_complete)  # сообщение после завершения потока
+        worker.signals.finish.connect(self.finish_message)  # сообщение после завершения потока
         self.threadpool.start(worker)
 
     def fn_main(self, progress_callback):
@@ -119,6 +116,7 @@ class Window(QMainWindow):
         routeinfo_name = converts_name()
         temp_path = pathlib.Path(TEMP_DIRECTORY_FOR_XML)
         if self.paths_validation:
+            self.create_directories()
             for convert in temp_files_list:
                 extract_files_from_arhive_to_directory(convert, TEMP_DIRECTORY_NAME)
                 dict_from_xml = self.merge_dict()
@@ -135,17 +133,24 @@ class Window(QMainWindow):
                     try:
                         file.unlink()
                     except OSError as e:
-                        print(f'Error: {file} : {e.strerror}')
-                full_path = pathlib.Path(ARCHIVE_DIRECTORY, convert)
-                if pathlib.Path.exists(full_path):
-                    move_files(convert, full_path)
-                else:
+                        logger.error(f'Ошибка: {file} : {e.strerror}')
+                try:
+                    move_files(convert, ARCHIVE_DIRECTORY)
+                except:
+                    pathlib.Path(ARCHIVE_DIRECTORY).joinpath(dict_from_xml['DocumentPackID']+'.zip').unlink()
                     move_files(convert, ARCHIVE_DIRECTORY)
             list_directories_for_deleting = [TEMP_DIRECTORY_NAME, TEMP_DIRECTORY_FOR_XML]
             for directory in list_directories_for_deleting:
                 deleting_directories(directory)
-            logger.info('Функция по формированию ответных интеграционных конвертов завершилась успешно')
+            logger.info('Функция по формированию ответных интеграционных конвертов выполнена')
         return f'функция {traceback.extract_stack()[-1][2]} выполнена'
+
+    def finish_message(self):
+        dlg = QMessageBox()
+        dlg.setWindowTitle('ЭМУЛЯТОР ЕПВВ')
+        dlg.setText('Функция выполнена')
+        dlg.setStandardButtons(QMessageBox.StandardButton.Ok)
+        button = dlg.exec()
 
     def check_json_file(self):
         """
@@ -266,8 +271,8 @@ class Window(QMainWindow):
         self.xsd_schema1.setToolTip('Путь к файлу: AppContext-> XMLSchemas-> epvv-> igr')
         self.result_code = QComboBox()
         self.result_code.activated.connect(self.get_result_text)
+        self.result_code.setEditable(True)
         self.result_text = QLineEdit()
-        self.result_text.setReadOnly(True)
         self.btn_set_path = self.lineedit_path_to_file.addAction(QIcon(self.btn_icon),
                                                                  QLineEdit.ActionPosition.TrailingPosition)
         self.btn_xsd1 = self.xsd_schema1.addAction(QIcon(self.btn_icon), QLineEdit.ActionPosition.TrailingPosition)
@@ -281,7 +286,6 @@ class Window(QMainWindow):
         self.btn_xsd4.triggered.connect(self.get_xsd_path)
         self.btn_handler = QPushButton('Обработать файлы в каталоге')
         self.btn_handler.clicked.connect(self.fn_main)
-        self.status = self.statusBar()
         self.main_layout.addWidget(self.label_path_to_file, 0, 0)
         self.main_layout.addWidget(self.lineedit_path_to_file, 0, 1)
         self.main_layout.addWidget(self.xsd_schema1, 1, 0, 1, 2)
@@ -323,7 +327,7 @@ class Window(QMainWindow):
             self.setGeometry(x, y, width, height)
             logger.info('Настройки размеров окна загружены.')
         except TypeError:
-            logger.info('Настройки размеров окна НЕ загружены. Установлены размеры по умолчанию')
+            logger.error('Настройки размеров окна НЕ загружены. Установлены размеры по умолчанию')
         self.xsd_schema1.setText(self.settings.value('XSD/envelope'))
         self.xsd_schema2.setText(self.settings.value('XSD/soap-envelope'))
         self.xsd_schema3.setText(self.settings.value('XSD/cbr_msg_props'))
