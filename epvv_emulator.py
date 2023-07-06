@@ -168,9 +168,7 @@ class Window(QMainWindow):
         """
         list_names = [TEMP_DIRECTORY_NAME, ARCHIVE_DIRECTORY, OUT_DIRECTORY, TEMP_DIRECTORY_FOR_XML]
         for name in list_names:
-            if pathlib.Path.exists(pathlib.Path.cwd().joinpath(name)):
-                pass
-            else:
+            if not pathlib.Path.exists(pathlib.Path.cwd().joinpath(name)):
                 create_directory(name)
 
     def fill_dictionary_constants(self, new_dict=None):
@@ -231,9 +229,7 @@ class Window(QMainWindow):
     def paths_validation(self):
         full_str_error = []
         for i in range(1, 5):
-            if pathlib.Path(eval('self.xsd_schema' + str(i) + '.text()')).exists():
-                pass
-            else:
+            if not pathlib.Path(eval('self.xsd_schema' + str(i) + '.text()')).exists():
                 full_str_error.append(eval('self.xsd_schema' + str(i) + '.text()'))
         if len(full_str_error) == 0:
             logger.info('Успешная валидация путей')
@@ -262,13 +258,13 @@ class Window(QMainWindow):
         self.xsd_schema1.setToolTip('Путь к файлу: AppContext-> XMLSchemas-> epvv-> igr')
         self.xsd_schema2 = QLineEdit()
         self.xsd_schema2.setPlaceholderText('Путь к soap-envelope.xsd')
-        self.xsd_schema1.setToolTip('Путь к файлу: AppContext-> XMLSchemas-> epvv')
+        self.xsd_schema2.setToolTip('Путь к файлу: AppContext-> XMLSchemas-> epvv')
         self.xsd_schema3 = QLineEdit()
         self.xsd_schema3.setPlaceholderText('Путь к cbr_msg_props.xsd')
-        self.xsd_schema1.setToolTip('Путь к файлу: AppContext-> XMLSchemas-> epvv')
+        self.xsd_schema3.setToolTip('Путь к файлу: AppContext-> XMLSchemas-> epvv')
         self.xsd_schema4 = QLineEdit()
         self.xsd_schema4.setPlaceholderText('Путь к routeinfo.xsd')
-        self.xsd_schema1.setToolTip('Путь к файлу: AppContext-> XMLSchemas-> epvv-> igr')
+        self.xsd_schema4.setToolTip('Путь к файлу: AppContext-> XMLSchemas-> epvv-> igr')
         self.result_code = QComboBox()
         self.result_code.activated.connect(self.get_result_text)
         self.result_code.setEditable(True)
@@ -285,7 +281,7 @@ class Window(QMainWindow):
         self.btn_xsd3.triggered.connect(self.get_xsd_path)
         self.btn_xsd4.triggered.connect(self.get_xsd_path)
         self.btn_handler = QPushButton('Обработать файлы в каталоге')
-        self.btn_handler.clicked.connect(self.fn_main)
+        self.btn_handler.clicked.connect(self.thread_handle_files)
         self.main_layout.addWidget(self.label_path_to_file, 0, 0)
         self.main_layout.addWidget(self.lineedit_path_to_file, 0, 1)
         self.main_layout.addWidget(self.xsd_schema1, 1, 0, 1, 2)
@@ -326,8 +322,8 @@ class Window(QMainWindow):
             y = int(self.settings.value('GUI/y'))
             self.setGeometry(x, y, width, height)
             logger.info('Настройки размеров окна загружены.')
-        except TypeError:
-            logger.error('Настройки размеров окна НЕ загружены. Установлены размеры по умолчанию')
+        except:
+            logger.warning('Настройки размеров окна НЕ загружены. Установлены размеры по умолчанию')
         self.xsd_schema1.setText(self.settings.value('XSD/envelope'))
         self.xsd_schema2.setText(self.settings.value('XSD/soap-envelope'))
         self.xsd_schema3.setText(self.settings.value('XSD/cbr_msg_props'))
