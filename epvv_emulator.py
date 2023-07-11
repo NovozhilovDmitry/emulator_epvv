@@ -92,13 +92,18 @@ class Window(QMainWindow):
         logger.info(s)
 
     def thread_complete(self):  # слот для сигнала о завершении потока
-        logger.info(self)
+        dlg = QMessageBox()
+        dlg.setWindowTitle('ЭМУЛЯТОР ЕПВВ')
+        text_message = f'Функция выполнена.\n На выполнение затрачено {self.count_time}'
+        dlg.setText(text_message)
+        dlg.setStandardButtons(QMessageBox.StandardButton.Ok)
+        button = dlg.exec()
 
     def thread_handle_files(self):
         logger.info('Начато выполнение функции по формированию ответных интеграционных конвертов')
         worker = Worker(self.fn_main)  # функция, которая выполняется в потоке
         worker.signals.result.connect(self.print_output)  # сообщение после завершения выполнения задачи
-        worker.signals.finish.connect(self.finish_message)  # сообщение после завершения потока
+        worker.signals.finish.connect(self.thread_complete)  # сообщение после завершения потока
         self.threadpool.start(worker)
 
     def fn_main(self, progress_callback):
@@ -106,6 +111,7 @@ class Window(QMainWindow):
         :param progress_callback: результат выполнения функции в потоке
         :return: выполненная функция
         """
+        start_time = datetime.now()
         temp_files_list = get_fullpath_to_files_from_arhive(self.lineedit_path_to_file.text())
         envelope_xsd = self.xsd_schema1.text()
         main_esodreceipt_xsd = self.xsd_schema2.text()
@@ -139,18 +145,14 @@ class Window(QMainWindow):
                 except:
                     pathlib.Path(ARCHIVE_DIRECTORY).joinpath(dict_from_xml['DocumentPackID']+'.zip').unlink()
                     move_files(convert, ARCHIVE_DIRECTORY)
+                    logger.info('ИК в архивном каталоге был заменен')
             list_directories_for_deleting = [TEMP_DIRECTORY_NAME, TEMP_DIRECTORY_FOR_XML]
             for directory in list_directories_for_deleting:
                 deleting_directories(directory)
             logger.info('Функция по формированию ответных интеграционных конвертов выполнена')
+        end_time = datetime.now()
+        self.count_time = end_time - start_time
         return f'функция {traceback.extract_stack()[-1][2]} выполнена'
-
-    def finish_message(self):
-        dlg = QMessageBox()
-        dlg.setWindowTitle('ЭМУЛЯТОР ЕПВВ')
-        dlg.setText('Функция выполнена')
-        dlg.setStandardButtons(QMessageBox.StandardButton.Ok)
-        button = dlg.exec()
 
     def check_json_file(self):
         """
