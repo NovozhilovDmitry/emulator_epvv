@@ -4,7 +4,7 @@ import pathlib
 from log_settings import logger
 from datetime import datetime
 from PyQt6.QtGui import QPixmap, QIcon
-from PyQt6.QtCore import QRunnable, QThreadPool, QSettings, QObject, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import QRunnable, QThreadPool, QSettings, QObject, pyqtSignal, pyqtSlot, Qt
 from PyQt6.QtWidgets import (QMainWindow,
                              QWidget,
                              QLabel,
@@ -37,7 +37,13 @@ OUT_DIRECTORY = 'out'
 FILENAME_JSON = 'result_codes.json'
 RESULT_CODE_DICT = {
     '0000': 'Сообщение успешно сформировано',
-    '9999': 'NOT OK'
+    '1005': 'Сообщение не будет обработано, поскольку архив сформирован неверно',
+    '1006': 'Сообщение не будет обработано, поскольку служебный конверт не соответствует требуемой структуре',
+    '3003': 'Сообщение заражено вирусом',
+    '3004': 'Сообщение не будет обработано, поскольку адресная информация указана некорректно',
+    '4002': 'Ошибка проверки подписи',
+    '4010': 'Неизвестная ошибка',
+    '9001': 'Общая ошибка обработки сообщения'
 }
 
 
@@ -94,10 +100,11 @@ class Window(QMainWindow):
     def thread_complete(self):  # слот для сигнала о завершении потока
         dlg = QMessageBox()
         dlg.setWindowTitle('ЭМУЛЯТОР ЕПВВ')
-        text_message = f'Функция выполнена.\n На выполнение затрачено {self.count_time}'
+        text_message = f'Функция выполнена.\nНа выполнение затрачено {self.count_time}'
         dlg.setText(text_message)
         dlg.setStandardButtons(QMessageBox.StandardButton.Ok)
-        button = dlg.exec()
+        dlg.exec()
+        logger.info(f'Функция выполнена за {self.count_time}')
 
     def thread_handle_files(self):
         logger.info('Начато выполнение функции по формированию ответных интеграционных конвертов')
@@ -121,7 +128,7 @@ class Window(QMainWindow):
         esod_name = converts_name()
         routeinfo_name = converts_name()
         temp_path = pathlib.Path(TEMP_DIRECTORY_FOR_XML)
-        if self.paths_validation:
+        if self.paths_validation():
             self.create_directories()
             for convert in temp_files_list:
                 extract_files_from_arhive_to_directory(convert, TEMP_DIRECTORY_NAME)
@@ -227,12 +234,14 @@ class Window(QMainWindow):
         :return: заполняет поле текстового описания кодов результата
         """
         self.result_text.setText(self.result_codes_dict[self.result_code.currentText()])
+        self.result_text.setCursorPosition(1)
 
     def paths_validation(self):
         full_str_error = []
         for i in range(1, 5):
             if not pathlib.Path(eval('self.xsd_schema' + str(i) + '.text()')).exists():
                 full_str_error.append(eval('self.xsd_schema' + str(i) + '.text()'))
+        print(full_str_error)
         if len(full_str_error) == 0:
             logger.info('Успешная валидация путей')
             return True
@@ -244,7 +253,7 @@ class Window(QMainWindow):
             dlg.setWindowTitle('Ошибка валидации путей')
             dlg.setText(error_message)
             dlg.setStandardButtons(QMessageBox.StandardButton.Close)
-            button = dlg.exec()
+            dlg.exec()
             logger.error('Ошибка валидации путей')
             return False
 
@@ -337,7 +346,6 @@ class Window(QMainWindow):
         :param event: событие, которое можно принять или переопределить при закрытии
         :return: охранение настроек при закрытии приложения
         """
-        # сохранение размеров и положения окна
         self.settings.beginGroup('GUI')
         self.settings.setValue('width', self.geometry().width())
         self.settings.setValue('height', self.geometry().height())
