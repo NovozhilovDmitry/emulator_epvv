@@ -4,7 +4,7 @@ import pathlib
 from log_settings import logger
 from datetime import datetime
 from PyQt6.QtGui import QPixmap, QIcon
-from PyQt6.QtCore import QRunnable, QThreadPool, QSettings, QObject, pyqtSignal, pyqtSlot, Qt
+from PyQt6.QtCore import QRunnable, QThreadPool, QSettings, QObject, pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import (QMainWindow,
                              QWidget,
                              QLabel,
@@ -241,7 +241,6 @@ class Window(QMainWindow):
         for i in range(1, 5):
             if not pathlib.Path(eval('self.xsd_schema' + str(i) + '.text()')).exists():
                 full_str_error.append(eval('self.xsd_schema' + str(i) + '.text()'))
-        print(full_str_error)
         if len(full_str_error) == 0:
             logger.info('Успешная валидация путей')
             return True
