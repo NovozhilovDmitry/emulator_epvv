@@ -334,6 +334,7 @@ class Window(QMainWindow):
             logger.info('Настройки размеров окна загружены.')
         except:
             logger.warning('Настройки размеров окна НЕ загружены. Установлены размеры по умолчанию')
+        self.lineedit_path_to_file.setText(self.settings.value('path'))
         self.xsd_schema1.setText(self.settings.value('XSD/envelope'))
         self.xsd_schema2.setText(self.settings.value('XSD/soap-envelope'))
         self.xsd_schema3.setText(self.settings.value('XSD/cbr_msg_props'))
@@ -352,6 +353,7 @@ class Window(QMainWindow):
         self.settings.setValue('y', self.geometry().y())
         self.settings.endGroup()
         self.settings.beginGroup('XSD')
+        self.settings.setValue('path', self.lineedit_path_to_file.text())
         self.settings.setValue('envelope', self.xsd_schema1.text())
         self.settings.setValue('soap-envelope', self.xsd_schema2.text())
         self.settings.setValue('cbr_msg_props', self.xsd_schema3.text())
