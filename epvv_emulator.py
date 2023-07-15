@@ -98,6 +98,9 @@ class Window(QMainWindow):
         logger.info(s)
 
     def thread_complete(self):  # слот для сигнала о завершении потока
+        """
+        :return: запускается после завершения потока
+        """
         dlg = QMessageBox()
         dlg.setWindowTitle('ЭМУЛЯТОР ЕПВВ')
         text_message = f'Функция выполнена.\nНа выполнение затрачено {self.count_time}'
@@ -107,6 +110,9 @@ class Window(QMainWindow):
         logger.info(f'Функция выполнена за {self.count_time}')
 
     def thread_handle_files(self):
+        """
+        :return: запуск функции в отдельном потоке
+        """
         logger.info('Начато выполнение функции по формированию ответных интеграционных конвертов')
         worker = Worker(self.fn_main)  # функция, которая выполняется в потоке
         worker.signals.result.connect(self.print_output)  # сообщение после завершения выполнения задачи
@@ -201,6 +207,9 @@ class Window(QMainWindow):
         return constants
 
     def fill_dict_from_interface(self):
+        """
+        :return: создание словаря с данными из полей интерфейса
+        """
         temp_dict = {
             'result_code': self.result_code.currentText(),
             'result_text': self.result_text.text(),
@@ -210,6 +219,9 @@ class Window(QMainWindow):
         return temp_dict
 
     def merge_dict(self):
+        """
+        :return: объединение трех словарей в один
+        """
         routeinfo_tags = ['Task', 'DocumentPackID']
         constants_dict = self.fill_dictionary_constants()
         routeinfo_dict = find_routeinfo_file_in_directory(TEMP_DIRECTORY_NAME, routeinfo_tags)
@@ -237,6 +249,9 @@ class Window(QMainWindow):
         self.result_text.setCursorPosition(1)
 
     def paths_validation(self):
+        """
+        :return: проверка корректности путей. Если проверка не пройдена, то выводится сообщение об ошибке в новом окне
+        """
         full_str_error = []
         for i in range(1, 5):
             if not pathlib.Path(eval('self.xsd_schema' + str(i) + '.text()')).exists():
@@ -252,8 +267,9 @@ class Window(QMainWindow):
             dlg.setWindowTitle('Ошибка валидации путей')
             dlg.setText(error_message)
             dlg.setStandardButtons(QMessageBox.StandardButton.Close)
+            dlg.setIcon(QMessageBox.Icon.Warning)
             dlg.exec()
-            logger.error('Ошибка валидации путей')
+            logger.error(f'Ошибка валидации путей: {error_message}')
             return False
 
     def header_layout(self):
@@ -303,6 +319,9 @@ class Window(QMainWindow):
         self.main_layout.addWidget(self.btn_handler, 7, 0, 1, 2)
 
     def get_path(self):
+        """
+        :return: получить путь к каталогу и установить его в поле
+        """
         get_dir = QFileDialog.getExistingDirectory(self, caption='Выбрать каталог')
         if get_dir:
             get_dir = get_dir
@@ -311,6 +330,9 @@ class Window(QMainWindow):
         self.lineedit_path_to_file.setText(get_dir)
 
     def get_xsd_path(self):
+        """
+        :return: получение пути к xsd-файлу и установить его в поле
+        """
         button = self.sender()
         get_dir = QFileDialog.getOpenFileName(self, caption='Выбрать файл')
         if get_dir:
@@ -333,7 +355,7 @@ class Window(QMainWindow):
             self.setGeometry(x, y, width, height)
             logger.info('Настройки размеров окна загружены.')
         except:
-            logger.warning('Настройки размеров окна НЕ загружены. Установлены размеры по умолчанию')
+            logger.warning('Установлены размеры окна по умолчанию')
         self.lineedit_path_to_file.setText(self.settings.value('path'))
         self.xsd_schema1.setText(self.settings.value('XSD/envelope'))
         self.xsd_schema2.setText(self.settings.value('XSD/soap-envelope'))
